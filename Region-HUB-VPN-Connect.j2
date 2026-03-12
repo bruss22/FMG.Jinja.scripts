@@ -1,0 +1,97 @@
+{%- set _ = "" -%}
+{%- set hubuls = {
+  "hub1": {
+      "region": "1",
+      "ports": {"port2": "192.168.100.2", "port3": "192.168.101.2"}
+  },
+  "hub2": {
+      "region": "1",
+      "ports": {"port2": "192.168.102.2", "port3": "192.168.103.2"}
+  },
+  "hub3": {
+      "region": "2",
+      "ports": {"port2": "192.168.112.2", "port3": "192.168.113.2"}
+  },
+  "hub4": {
+      "region": "2",
+      "ports": {"port2": "192.168.114.2", "port3": "192.168.115.2"}
+  }
+} -%}
+{%- set tunnel_netids = {
+  "hub1": {
+    "hub3": {"port2": 100, "port3": 101},
+    "hub4": {"port2": 102, "port3": 103}
+  },
+  "hub2": {
+    "hub3": {"port2": 104, "port3": 105},
+    "hub4": {"port2": 106, "port3": 107}
+  },
+  "hub3": {
+    "hub1": {"port2": 100, "port3": 101},
+    "hub2": {"port2": 104, "port3": 105}
+  },
+  "hub4": {
+    "hub1": {"port2": 102, "port3": 103},
+    "hub2": {"port2": 106, "port3": 107}
+  }
+} -%}
+{%- set ns = namespace(intfs={}) -%}
+{%- set ns2 = namespace(localhub='', region='') -%}
+{%- for intf in DEVDB_system_interface -%}
+    {%- if intf.name is defined and intf.ip is defined and intf.ip -%}
+        {% set _ = ns.intfs.update({
+            intf.name: {
+                'type': intf.type | default(''),
+                'ip': (intf.ip.split(' '))[0],
+                'mask': (intf.ip.split(' '))[1]
+            }
+        }) %}
+    {%- endif -%}
+{%- endfor -%}
+{%- for hub, data in hubuls.items() -%}
+    {%- if 'port2' in ns.intfs and 'port3' in ns.intfs
+          and ns.intfs['port2'].ip == data.ports['port2']
+          and ns.intfs['port3'].ip == data.ports['port3'] -%}
+        {%- set ns2.localhub = hub -%}
+        {%- set ns2.region = data.region -%}
+    {%- endif -%}
+{%- endfor -%}
+
+{%- for remotehub, data in hubuls.items() if data.region != ns2.region -%}
+    {%- for port, remote_ip in data.ports.items() %}
+config vpn ipsec phase1-interface
+    edit "{{ remotehub }}-{{ port }}"
+        set interface "{{ port }}"
+        set ike-version 2
+        set dhgrp 20 21
+        set proposal aes256-sha256
+        set peertype any
+        set localid "{{ DVMDB.name }}"
+        set remote-gw {{ remote_ip }}
+        set net-device enable
+        set exchange-ip-addr4 {{ ns.intfs["BGP-Lo"].ip }}
+        set auto-discovery-sender enable
+        set auto-discovery-forwarder enable
+        set psksecret {{ admin_pw }}
+        set network-overlay enable
+        set network-id {{ tunnel_netids[ns2.localhub][remotehub][port] }}
+        set exchange-fgt-device-id enable
+        set transport udp
+    next
+end
+config system interface
+     edit "{{ remotehub }}-{{ port }}"
+          set type tunnel
+     next
+end
+config vpn ipsec phase2-interface
+     edit "{{ remotehub }}-{{ port }}"
+          set phase1name "{{ remotehub }}-{{ port }}"
+          set proposal aes256-sha256
+          set keepalive enable
+          set dhgrp 20 21
+          set keylifeseconds 3600
+     next
+end
+    {%- endfor %}
+{%- endfor %}
