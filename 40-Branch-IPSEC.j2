@@ -41,7 +41,7 @@ edit "{{ endpoint.phase1 }}"
     {% if main.vars.advpn -%}
     set auto-discovery-receiver enable
     {% endif -%}
-    set psksecret {{vpn_psk}}
+    set psksecret "{{vpn_psk}}"
     set network-overlay enable
     set network-id {{ endpoint.netid }}
     set transport udp
