@@ -1,0 +1,12 @@
+{%- import '00-import' as main with context -%}
+config system interface
+edit "Branch-Lo"
+set vdom "root"
+set ip {{main.vars.ipv4lbrange|ipmath(branch_id|int)}} 255.255.255.255
+set allowaccess ping
+set type loopback
+next
+end
+config system settings
+set location-id {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+end

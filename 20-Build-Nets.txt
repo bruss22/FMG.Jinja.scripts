@@ -1,0 +1,70 @@
+{#- Script #2:Build VLAN or Physical Interfaces based on value of network_type:"" in main.j2 var object -#} 
+{#- Save as CLI Jinja Template and import Script #1 -#}
+{%- import '00-import' as main with context -%}
+{%- set override = [''] -%}
+{%- set network_type = 'port' -%}
+{%- set prefix = main.vars['vlan_prefix']|upper -%}
+{%- if 'vlan' in main.vars['network_type']|lower -%}
+{%- set network_type = 'vlan' -%}
+{%- endif -%}
+{%- for x in main.nets -%}
+{%- if x.name is defined -%}
+{%- if x.name in override -%}
+{%- set network_type = 'port' -%}
+{%- endif -%}
+config system interface
+    {%- if network_type == 'vlan' %}
+    edit {{prefix}}{{x.netid}}
+        set interface {{x.port}}
+        set vlanid {{x.netid}}
+    {%- else %}
+    edit {{x.port}}
+    {%- endif %}
+        set vdom "root"
+        set mode static
+        set allowaccess ping
+        set description {{x.name|upper}}-Network        
+        {%- if x.vrf is defined %}
+        set vrf {{x.vrf}}
+        {%- endif %}
+        {# Check if subnet variable is host or network #}
+        {%- if x.subnet | ipaddr('host') -%}
+        set ip {{x.subnet|ipaddr('address')}} {{x.subnet|ipaddr('netmask')}}
+        {%- else -%}
+        set ip {{x.subnet|ipaddr(1)|ipaddr('address')}} {{x.subnet|ipaddr('netmask')}}
+        {%- endif %}
+    next
+end
+{% endif %}
+{%- if x.dhcp | default('n') == 'y' -%}
+config system dhcp server
+    edit {{x.netid}}
+        {%- if network_type == 'vlan' %}    
+        set interface {{prefix}}{{x.netid}}
+        {%- else %}
+        set interface {{x.port}}
+        {%- endif %}
+        set dns-service default
+        {%- if x.subnet | ipaddr('host') %}
+        set default-gateway {{x.subnet|ipaddr('address')}}
+        {%- else %}
+        set default-gateway {{x.subnet| ipaddr('subnet') | ipaddr(1) | ipaddr('address') }}
+        {%- endif %}
+        set netmask {{x.subnet| ipaddr('netmask')}}
+        {%- if x.subnet| ipaddr('size_usable') >= 62 %}
+        config ip-range
+           edit 1
+             set start-ip {{x.subnet| ipaddr('subnet') | ipaddr(+20) | ipaddr('address') }}
+             set end-ip {{ x.subnet | ipaddr('subnet') | ipaddr(-2) | ipaddr('address') }}
+        {%- elif x.subnet| ipaddr('size_usable') <= 62 %}
+        config ip-range
+           edit 1
+             set start-ip {{x.subnet| ipaddr('subnet') | ipaddr(+3) | ipaddr('address') }}
+             set end-ip {{ x.subnet | ipaddr('subnet') | ipaddr(-2) | ipaddr('address') }}
+        {%- endif %}
+          next
+      end
+   next
+end
+{% endif %}
+{%- endfor -%}

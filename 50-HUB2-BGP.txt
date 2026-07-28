@@ -1,0 +1,72 @@
+{%- import '00-import' as main with context -%}
+config router bgp
+set as {{main.vars.internal_asn}}
+set router-id {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+set keepalive-timer 15
+set holdtime-timer 45
+set ibgp-multipath enable
+set ebgp-multipath enable
+set graceful-restart enable
+set recursive-next-hop enable
+set recursive-inherit-priority enable
+config neighbor
+edit 192.168.133.2
+        set advertisement-interval 1
+        set capability-graceful-restart enable
+        set attribute-unchanged med
+        set ebgp-enforce-multihop enable
+        set next-hop-self enable
+        set soft-reconfiguration enable
+        set interface {{hlan1_port}}
+        set remote-as 65021
+        set update-source {{hlan1_port}}
+        {% if main.vars.vrf -%}
+        set soft-reconfiguration-vpnv4 enable
+        set capability-graceful-restart-vpnv4 enable
+        {% endif -%}
+    next
+end
+config neighbor-group
+    edit "EDGE"
+        set advertisement-interval 1
+        set capability-graceful-restart enable
+        set next-hop-self enable
+        set passive disable
+        set soft-reconfiguration enable
+        set interface "BGP-Lo"
+        set remote-as {{main.vars.internal_asn}}
+        set update-source "BGP-Lo"
+        {% if main.vars.vrf -%}
+        set soft-reconfiguration-vpnv4 enable
+        set capability-graceful-restart-vpnv4 enable
+        {% endif -%}
+    next
+end
+config neighbor-range
+    edit 1
+        set prefix {{main.vars.ipv4lbrange}} 255.255.255.0
+        set neighbor-group "EDGE"
+    next
+end
+config network
+    edit 1
+        set prefix {{hlan1_subnet|ipaddr('network/prefix')}}
+    next
+end
+{% if main.vars.vrf -%}
+config vrf
+    edit "0"
+        set role pe
+    next
+    {% for x in main.nets -%}
+    {% if x.vrf is defined -%}
+    edit {{x.vrf}}
+        set role ce
+        set rd {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}:{{x.vrf}}
+        set export-rt {{main.vars.internal_asn}}:{{x.vrf}}
+        set import-rt {{main.vars.internal_asn}}:{{x.vrf}}
+    next
+    {% endif -%}
+    {%- endfor -%}
+end
+{% endif -%}

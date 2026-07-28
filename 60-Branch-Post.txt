@@ -1,0 +1,70 @@
+{%- import '00-import' as main with context -%}
+{%- if main.vars.vrf -%}
+config system settings
+set allow-subnet-overlap enable
+end
+config system vdom-link
+  edit "vrf{{ blan1_vrf }}_leak"
+  next
+end
+config system interface
+  edit "vrf{{ blan1_vrf }}_leak0"
+    set type vdom-link
+    set vrf 0
+    set vdom root
+    set ip 10.255.255.0/31
+    set allowaccess ping
+  next
+  edit "vrf{{ blan1_vrf }}_leak1"
+    set type vdom-link
+    set vrf {{ blan1_vrf  }}
+    set vdom root
+    set ip 10.255.255.1/31
+    set allowaccess ping
+   next
+end
+{% endif -%}
+config log fortianalyzer setting
+    set status enable
+    set server "192.168.0.2"
+    set upload-option realtime
+    set reliable enable
+    set vrf-select 250
+end
+config system interface
+    edit {{UL1_port}}
+        set allowaccess speed-test fgfm 
+        set outbandwidth {{UL1_outbw}}
+        set inbandwidth {{UL1_inbw}}
+        set estimated-upstream-bandwidth {{UL1_outbw}}
+        set estimated-downstream-bandwidth {{UL1_inbw}}
+        set egress-shaping-profile "SHAPER"
+        set monitor-bandwidth enable
+    next
+    edit {{UL2_port}}
+        set allowaccess speed-test fgfm https ssh
+        set outbandwidth {{UL2_outbw}}
+        set inbandwidth {{UL2_inbw}}
+        set estimated-upstream-bandwidth {{UL2_outbw}}
+        set estimated-downstream-bandwidth {{UL2_inbw}}
+        set egress-shaping-profile "SHAPER"
+        set monitor-bandwidth enable
+    next
+end
+config system sdwan
+config members
+edit 3
+set source {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+next
+edit 4
+set source {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+next
+edit 5
+set source {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+next
+edit 6
+set source {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+next
+end
+
+

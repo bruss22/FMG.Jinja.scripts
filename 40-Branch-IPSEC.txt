@@ -1,0 +1,79 @@
+{#- --------------------------------------------------------------------- -#}
+{# Branch-Side Hub IPsec Definitions                                     -#}
+{#                                                                       -#}
+{# Each hub can contain one or more IPsec endpoints.                     -#}
+{# Each endpoint defines:                                                -#}
+{#   - Phase1 interface name                                             -#}
+{#   - Hub remote gateway                                                -#}
+{#   - Unique IPsec network ID                                           -#}
+{# --------------------------------------------------------------------- -#}
+{%- import '00-import' as main with context -%}
+{# --------------------------------------------------------------------- -#}
+{# IPsec Phase1-Interfaces: If main.vrf=true and main.advpn checks       -#}
+{# --------------------------------------------------------------------- -#}
+config vpn ipsec phase1-interface
+{% for hub in main.hubs -%}
+{% for endpoint in hub.endpoints -%}
+edit "{{ endpoint.phase1 }}"
+    {% if "VPN1" in endpoint.phase1 -%}
+    set interface {{UL1_port}}
+    {% endif -%}
+    {% if "VPN2" in endpoint.phase1 -%}
+    set interface {{UL2_port}}
+    {% endif -%}
+    set ike-version 2
+    set dpd on-idle
+    set dhgrp 20 21
+    set proposal aes256-sha256
+    set peertype any
+    set localid "{{DVMDB.name}}-{{endpoint.phase1}}"
+    set remote-gw {{ endpoint.remote_gw }}
+    set idle-timeout enable
+    set dpd-retrycount 2
+    set dpd-retryinterval 2
+    set net-device enable
+    set add-route disable
+    set exchange-fgt-device-id enable
+    set exchange-ip-addr4 {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+    {% if main.vars.vrf -%}
+    set encapsulation vpn-id-ipip
+    {% endif -%}
+    {% if main.vars.advpn -%}
+    set auto-discovery-receiver enable
+    {% endif -%}
+    set psksecret {{vpn_psk}}
+    set network-overlay enable
+    set network-id {{ endpoint.netid }}
+    set transport udp
+next
+{% endfor -%}
+{% endfor -%}
+end
+{# --------------------------------------------------------------------- -#}
+{# IPsec Phase2 Interfaces:                                              -#}
+{# --------------------------------------------------------------------- -#}
+config vpn ipsec phase2-interface
+{% for hub in main.hubs -%}
+{% for endpoint in hub.endpoints -%}
+edit "{{ endpoint.phase1 }}"
+    set phase1name "{{ endpoint.phase1 }}"
+    set proposal aes256-sha256
+    set auto-negotiate enable
+    set dhgrp 20 21
+next
+{% endfor -%}
+{% endfor -%}
+end
+{# --------------------------------------------------------------------- -#}
+{# IPsec Tunnel System Interfaces:                                       -#}
+{# --------------------------------------------------------------------- -#}
+config system interface
+{% for hub in main.hubs -%}
+{% for endpoint in hub.endpoints -%}
+edit "{{ endpoint.phase1 }}"
+    set type tunnel
+    set monitor-bandwidth enable
+next
+{% endfor -%}
+{% endfor -%}
+end

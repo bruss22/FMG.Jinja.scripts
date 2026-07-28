@@ -1,0 +1,121 @@
+{%- import '00-import' as main with context -%}
+config router route-map
+  edit "LAN_TAG"
+    config rule
+      edit 1
+        set set-tag 100
+      next
+    end
+  next
+  edit "LAN_OUT"
+    config rule
+      edit 1
+        set match-tag 100
+      next
+    end  
+  next
+end
+config router bgp
+set as {{main.vars.internal_asn}}
+set router-id {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+set keepalive-timer 15
+set holdtime-timer 45
+set ibgp-multipath enable
+set graceful-restart enable
+set recursive-next-hop enable
+config neighbor
+    edit "172.22.22.251"
+        set advertisement-interval 1
+        set capability-graceful-restart enable
+        set soft-reconfiguration enable
+        set interface "Branch-Lo"
+        set remote-as {{main.vars.internal_asn}}
+        set connect-timer 1
+        set update-source "Branch-Lo"
+        {% if main.vars.vrf -%}
+        set soft-reconfiguration-vpnv4 enable
+        set capability-graceful-restart-vpnv4 enable
+        {% endif -%}
+    next
+    edit "172.22.22.252"
+        set advertisement-interval 1
+        set capability-graceful-restart enable
+        set soft-reconfiguration enable
+        set interface "Branch-Lo"
+        set remote-as {{main.vars.internal_asn}}
+        set connect-timer 1
+        set update-source "Branch-Lo"
+        {% if main.vars.vrf -%}
+        set soft-reconfiguration-vpnv4 enable
+        set capability-graceful-restart-vpnv4 enable
+        {% endif -%}
+    next
+end
+{% if main.vars.advpn -%}
+config neighbor-group
+    edit "DYN_EDGE"
+        set advertisement-interval 1
+        set capability-graceful-restart enable
+        set next-hop-self enable
+        set passive disable
+        set soft-reconfiguration enable
+        set interface "Branch-Lo"
+        set remote-as {{main.vars.internal_asn}}
+        set update-source "Branch-Lo"
+        {% if main.vars.vrf -%}
+        set soft-reconfiguration-vpnv4 enable
+        set capability-graceful-restart-vpnv4 enable
+        {% endif -%}
+    next
+end
+config neighbor-range
+    edit 1
+        set prefix {{main.vars.ipv4lbrange}} 255.255.255.0
+        set neighbor-group "DYN_EDGE"
+    next
+end
+{% endif -%}
+config network
+    edit 1
+        set prefix {{blan1_subnet|ipaddr('network/prefix')}}
+        set route-map "LAN_TAG"
+    next
+end
+{% if main.vars.vrf -%}
+config vrf
+    edit "0"
+        set role pe
+    next
+    {% for x in main.nets -%}
+    {% if x.vrf is defined -%}
+    edit {{x.vrf}}
+        set role ce
+        set rd {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}:{{x.vrf}}
+        set export-rt {{main.vars.internal_asn}}:{{x.vrf}}
+        set import-rt {{main.vars.internal_asn}}:{{x.vrf}}
+    next
+    {% endif -%}
+    {%- endfor -%}
+end
+{% endif -%}
+config redistribute "connected"
+end
+config redistribute "isis"
+end
+config redistribute "ospf"
+end
+config redistribute "rip"
+end
+config redistribute "static"
+end
+config redistribute6 "connected"
+end
+config redistribute6 "isis"
+end
+config redistribute6 "ospf"
+end
+config redistribute6 "rip"
+end
+config redistribute6 "static"
+end
+end
