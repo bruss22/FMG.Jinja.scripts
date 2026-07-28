@@ -24,7 +24,8 @@ set ibgp-multipath enable
 set graceful-restart enable
 set recursive-next-hop enable
 config neighbor
-    edit "172.22.22.251"
+{% for hub in main.hubs -%}
+    edit {{ hub.exchangeip }}
         set advertisement-interval 1
         set capability-graceful-restart enable
         set soft-reconfiguration enable
@@ -37,19 +38,7 @@ config neighbor
         set capability-graceful-restart-vpnv4 enable
         {% endif -%}
     next
-    edit "172.22.22.252"
-        set advertisement-interval 1
-        set capability-graceful-restart enable
-        set soft-reconfiguration enable
-        set interface "Branch-Lo"
-        set remote-as {{main.vars.internal_asn}}
-        set connect-timer 1
-        set update-source "Branch-Lo"
-        {% if main.vars.vrf -%}
-        set soft-reconfiguration-vpnv4 enable
-        set capability-graceful-restart-vpnv4 enable
-        {% endif -%}
-    next
+{% endfor -%}
 end
 {% if main.vars.advpn -%}
 config neighbor-group
