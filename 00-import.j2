@@ -17,10 +17,11 @@
   "internal_asn":65222
 })-%}
 {%- set nets = 
+{%- set nets = 
   [
-        {'name':blan1_name, 'port':blan1_port, 'netid':blan1_netid, 'subnet':blan1_subnet, 'dhcp':blan1_dhcp, 'vrf':blan1_vrf},
-        {'name':guest_name, 'port':guest_port, 'netid':guest_netid, 'subnet':guest_subnet, 'dhcp':guest_dhcp, 'vrf':guest_vrf},
-        {'name':hlan1_name, 'port':hlan1_port, 'netid':hlan1_netid, 'subnet':hlan1_subnet, 'dhcp':hlan1_dhcp, 'vrf':hlan1_vrf},
+        {'name':blan1_name, 'port':blan1_port, 'netid':blan1_netid, 'subnet':blan1_subnet, 'dhcp':blan1_dhcp, 'vrf':blan1_vrf, "bgp":blan1_bgp},
+        {'name':guest_name, 'port':guest_port, 'netid':guest_netid, 'subnet':guest_subnet, 'dhcp':guest_dhcp, 'vrf':guest_vrf, "bgp":guest_bgp},
+        {'name':hlan1_name, 'port':hlan1_port, 'netid':hlan1_netid, 'subnet':hlan1_subnet, 'dhcp':hlan1_dhcp, 'vrf':hlan1_vrf, "bgp":hlan1_bgp},
   ]
 -%}
 
