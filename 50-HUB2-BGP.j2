@@ -1,4 +1,5 @@
 {%- import '00-import' as main with context -%}
+{%- set ns = namespace(vrfs=[]) -%}
 config router bgp
 set as {{main.vars.internal_asn}}
 set router-id {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
@@ -59,12 +60,15 @@ config vrf
         set role pe
     next
     {% for x in main.nets -%}
-    {% if x.vrf is defined -%}
-    edit {{x.vrf}}
+    {% if x.vrf is defined
+          and x.bgp|default('n')|lower == 'y'
+          and x.vrf not in ns.vrfs -%}
+    {%- set ns.vrfs = ns.vrfs + [x.vrf] -%}
+    edit {{ x.vrf }}
         set role ce
-        set rd {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}:{{x.vrf}}
-        set export-rt {{main.vars.internal_asn}}:{{x.vrf}}
-        set import-rt {{main.vars.internal_asn}}:{{x.vrf}}
+        set rd {{ main.vars.ipv4lbrange|ipmath(branch_id|int) }}:{{ x.vrf }}
+        set export-rt {{ main.vars.internal_asn }}:{{ x.vrf }}
+        set import-rt {{ main.vars.internal_asn }}:{{ x.vrf }}
     next
     {% endif -%}
     {%- endfor -%}
