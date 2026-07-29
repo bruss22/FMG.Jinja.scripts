@@ -15,6 +15,14 @@ config router route-map
       next
     end  
   next
+  edit "LAN_OUT_DENY"
+    config rule
+      edit 1
+        set action deny
+        set match-tag 100
+      next
+    end  
+  next
 end
 config router bgp
 set as {{main.vars.internal_asn}}
@@ -35,8 +43,10 @@ config neighbor
         set connect-timer 1
         set update-source "Branch-Lo"
         {% if main.vars.vrf -%}
+        set route-map-out LAN_OUT_DENY
         set soft-reconfiguration-vpnv4 enable
         set capability-graceful-restart-vpnv4 enable
+        set route-map-out-vpnv4 LAN_OUT
         {% endif -%}
     next
 {% endfor -%}
@@ -54,7 +64,9 @@ config neighbor-group
         set update-source "Branch-Lo"
         {% if main.vars.vrf -%}
         set soft-reconfiguration-vpnv4 enable
+        set route-map-out LAN_OUT_DENY
         set capability-graceful-restart-vpnv4 enable
+        set route-map-out-vpnv4 LAN_OUT
         {% endif -%}
     next
 end
