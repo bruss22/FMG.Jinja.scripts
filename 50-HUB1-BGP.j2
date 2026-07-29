@@ -1,6 +1,6 @@
 {%- import '00-import' as main with context -%}
 {%- set hub = main.hubs | selectattr('name', 'equalto', 'HUB1') | first -%}
-{%- set ns = namespace(vrfs=[]) -%}
+{%- set ns = namespace(vrfs=[], index=100) -%}
 config router route-map
   edit "HLAN_TAG"
     config rule
@@ -76,16 +76,23 @@ config neighbor-range
         set neighbor-group "EDGE"
     next
 end
+{% if main.vars.vrf -%}
+{% if main.vars.branch_summary -%}
+config aggregate-address
+{% for summary in main.vars.branch_summary -%}
+   edit {{ns.index}}
+       set prefix {{ summary }}
+   {% set ns.index = ns.index + 1 -%}
+   next
+{% endfor -%}
+end
+{% endif -%}
+{% endif -%}
 config network
     edit 1
         set prefix {{hlan1_subnet|ipaddr('network/prefix')}}
         set route-map HLAN_TAG
     next
-    {% if main.vars.vrf -%}
-    edit 2
-        set prefix {{main.vars.branch_summary}}
-    next
-    {% endif -%}
 end
 {% if main.vars.vrf -%}
 config vrf
