@@ -17,7 +17,7 @@ config vpn ipsec phase1-interface
 {% for endpoint in hub.endpoints -%}
 edit "{{ endpoint.phase1.rsplit("-", 1)[1] }}"
     set type dynamic
-    set interface {{endpoint.port}}
+    set interface "{{endpoint.port}}"
     set ike-version 2
     set dpd on-idle
     set dhgrp 20 21
