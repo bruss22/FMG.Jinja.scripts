@@ -10,3 +10,28 @@ end
 config system settings
 set location-id {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
 end
+{% if main.vars.vrf -%}
+config system settings
+set allow-subnet-overlap enable
+end
+config system vdom-link
+  edit "vrf{{ blan1_vrf }}_leak"
+  next
+end
+config system interface
+  edit "vrf{{ blan1_vrf }}_leak0"
+    set type vdom-link
+    set vrf 0
+    set vdom root
+    set ip 10.255.255.0/31
+    set allowaccess ping
+  next
+  edit "vrf{{ blan1_vrf }}_leak1"
+    set type vdom-link
+    set vrf {{ blan1_vrf  }}
+    set vdom root
+    set ip 10.255.255.1/31
+    set allowaccess ping
+   next
+end
+{% endif -%}
