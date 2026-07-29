@@ -46,7 +46,6 @@ config neighbor
         set route-map-out LAN_OUT_DENY
         set soft-reconfiguration-vpnv4 enable
         set capability-graceful-restart-vpnv4 enable
-        set route-map-out-vpnv4 LAN_OUT
         {% endif -%}
     next
 {% endfor -%}
@@ -65,8 +64,8 @@ config neighbor-group
         {% if main.vars.vrf -%}
         set soft-reconfiguration-vpnv4 enable
         set route-map-out LAN_OUT_DENY
-        set capability-graceful-restart-vpnv4 enable
         set route-map-out-vpnv4 LAN_OUT
+        set capability-graceful-restart-vpnv4 enable
         {% endif -%}
     next
 end
