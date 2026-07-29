@@ -1,8 +1,32 @@
 {%- import '00-import' as main with context -%}
 {%- set ns = namespace(vrfs=[]) -%}
+config router route-map
+  edit "HLAN_TAG"
+    config rule
+      edit 1
+        set set-tag 100
+      next
+    end
+  next
+  edit "HLAN_OUT"
+    config rule
+      edit 1
+        set match-tag 100
+      next
+    end  
+  next
+  edit "HLAN_OUT_DENY"
+    config rule
+      edit 1
+        set action deny
+        set match-tag 100
+      next
+    end  
+  next
+end
 config router bgp
 set as {{main.vars.internal_asn}}
-set router-id {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+set router-id {{main.hubs[1].exchangeip}} 
 set keepalive-timer 15
 set holdtime-timer 45
 set ibgp-multipath enable
@@ -52,7 +76,13 @@ end
 config network
     edit 1
         set prefix {{hlan1_subnet|ipaddr('network/prefix')}}
+        set route-map HLAN_TAG
     next
+    {% if main.vars.vrf -%}
+    edit 2
+        set prefix {{main.vars.branch_summary}}
+    next
+    {% endif -%}
 end
 {% if main.vars.vrf -%}
 config vrf
