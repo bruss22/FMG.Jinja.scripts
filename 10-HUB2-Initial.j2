@@ -8,13 +8,13 @@ set type loopback
 next
 edit "BGP-Lo"
 set vdom "root"
-set ip {{main.vars.ipv4lbrange|ipmath(branch_id|int)}} 255.255.255.255
+set ip {{ main.hubs[0].exchangeip }}  255.255.255.255
 set allowaccess ping
 set type loopback
 next
 end
 config system settings
-set location-id {{main.vars.ipv4lbrange|ipmath(branch_id|int)}} 
+set location-id {{ main.hubs[0].exchangeip }}  
 end
 config system global
 set cli-audit-log enable
