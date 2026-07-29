@@ -1,29 +1,4 @@
 {%- import '00-import' as main with context -%}
-{%- if main.vars.vrf -%}
-config system settings
-set allow-subnet-overlap enable
-end
-config system vdom-link
-  edit "vrf{{ blan1_vrf }}_leak"
-  next
-end
-config system interface
-  edit "vrf{{ blan1_vrf }}_leak0"
-    set type vdom-link
-    set vrf 0
-    set vdom root
-    set ip 10.255.255.0/31
-    set allowaccess ping
-  next
-  edit "vrf{{ blan1_vrf }}_leak1"
-    set type vdom-link
-    set vrf {{ blan1_vrf  }}
-    set vdom root
-    set ip 10.255.255.1/31
-    set allowaccess ping
-   next
-end
-{% endif -%}
 config log fortianalyzer setting
     set status enable
     set server "192.168.0.2"
@@ -66,5 +41,3 @@ edit 6
 set source {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
 next
 end
-
-
