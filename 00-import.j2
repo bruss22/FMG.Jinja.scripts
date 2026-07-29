@@ -32,11 +32,18 @@
   ]
 -%}
 {# HUB Definitions #}
-{% set hubs = [
+{%- set hubs = [
     {
         "name": "HUB1",
-		"serial": "FGVMSLTM26000716",
+        "serial": "FGVMSLTM26000716",
         "exchangeip": "172.22.22.251",
+        "ebgp_neighbors": [
+            {
+                "ip": "192.168.132.2",
+                "interface": hlan1_port,
+                "remote_as": 65011
+            }
+        ],
         "endpoints": [
             {
                 "phase1": "HUB1-VPN1",
@@ -56,8 +63,15 @@
     },
     {
         "name": "HUB2",
-		"serial": "FGVMSLTM26001156",
+        "serial": "FGVMSLTM26001156",
         "exchangeip": "172.22.22.252",
+        "ebgp_neighbors": [
+            {
+                "ip": "192.168.133.2",
+                "interface": hlan1_port,
+                "remote_as": 65021
+            }
+        ],
         "endpoints": [
             {
                 "phase1": "HUB2-VPN1",
