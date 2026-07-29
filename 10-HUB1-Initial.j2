@@ -8,7 +8,7 @@ set type loopback
 next
 edit "BGP-Lo"
 set vdom "root"
-set ip {{ main.hubs[0].exchangeip }} 
+set ip {{ main.hubs[0].exchangeip }} 255.255.255.255
 set allowaccess ping
 set type loopback
 next
