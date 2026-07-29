@@ -1,73 +1,74 @@
-{# Script #1: Import CLI template For FMG. Create new Jinja CLI Template with the following contents#}
-{# Nets Object is list of dictionaries containing Network Based MetaVariables #}
-{# MetaVars should be in place om FMG prior to template creation #}
-{# format key:metavar #}
-{# 'subnet':network1_subnet define in cidr notation xxx.xxx.xxx.xxx/xx. script checks for host and network#}
-{# 'netid':network1_netid will be used for VLANID / DHCP Server Index or both #}
-{%- set _do = "" -%}
-{%- set vars = {} -%}
-{# Glabal Vars, If vlan based networks set network type to "network_type":"vlan" Only required for build_nets script #}
-{# Default mode is port mode #}
-{%- set _do = vars.update({
-  "network_type":"",
-  "vlan_prefix":"VLAN",
-  "advpn": true,
-  "vrf": true,
-  "ipv4lbrange":"172.22.22.0",
-  "internal_asn":65222
-})-%}
-{%- set nets = 
-  [
-        {'name':blan1_name, 'port':blan1_port, 'netid':blan1_netid, 'subnet':blan1_subnet, 'dhcp':blan1_dhcp, 'vrf':blan1_vrf, "bgp":blan1_bgp},
-        {'name':guest_name, 'port':guest_port, 'netid':guest_netid, 'subnet':guest_subnet, 'dhcp':guest_dhcp, 'vrf':guest_vrf, "bgp":guest_bgp},
-        {'name':hlan1_name, 'port':hlan1_port, 'netid':hlan1_netid, 'subnet':hlan1_subnet, 'dhcp':hlan1_dhcp, 'vrf':hlan1_vrf, "bgp":hlan1_bgp},
-  ]
--%}
-
-{%- set underlays = 
-  [
-        {'port':UL1_port,'ip':UL1_ip,'gw':UL1_gw},
-        {'port':UL2_port,'ip':UL2_ip,'gw':UL2_gw},
-  ]
--%}
-{# HUB Definitions #}
-{% set hubs = [
-    {
-        "name": "HUB1",
-		"serial": "FGVMSLTM26000716",
-        "exchangeip": "172.22.22.251",
-        "endpoints": [
-            {
-                "phase1": "HUB1-VPN1",
-                "remote_gw": "192.168.100.2",
-                "netid": 1,
-                "port": "port2"
-            },
-            {
-                "phase1": "HUB1-VPN2",
-                "remote_gw": "192.168.101.2",
-                "netid": 2,
-                "port": "port3"
-            }
-        ]
-    },
-    {
-        "name": "HUB2",
-		"serial": "FGVMSLTM26001156",
-        "exchangeip": "172.22.22.252",
-        "endpoints": [
-            {
-                "phase1": "HUB2-VPN1",
-                "remote_gw": "192.168.102.2",
-                "netid": 5,
-                "port": "port2"
-            },
-            {
-                "phase1": "HUB2-VPN2",
-                "remote_gw": "192.168.103.2",
-                "netid": 6,
-                "port": "port3"
-            }
-        ]
-    }
-] -%}
+{#- --------------------------------------------------------------------- -#}
+{# Branch-Side Hub IPsec Definitions                                     -#}
+{#                                                                       -#}
+{# Each hub can contain one or more IPsec endpoints.                     -#}
+{# Each endpoint defines:                                                -#}
+{#   - Phase1 interface name                                             -#}
+{#   - Hub remote gateway                                                -#}
+{#   - Unique IPsec network ID                                           -#}
+{# --------------------------------------------------------------------- -#}
+{%- import '00-import' as main with context -%}
+{# --------------------------------------------------------------------- -#}
+{# IPsec Phase1-Interfaces: If main.vrf=true and main.advpn checks       -#}
+{# --------------------------------------------------------------------- -#}
+config vpn ipsec phase1-interface
+{% for hub in main.hubs -%}
+{% for endpoint in hub.endpoints -%}
+edit "{{ endpoint.phase1 }}"
+    set interface "{{endpoint.branch_port}}"
+    set ike-version 2
+    set dpd on-idle
+    set dhgrp 20 21
+    set proposal aes256-sha256
+    set peertype any
+    set localid "{{DVMDB.name}}-{{endpoint.phase1}}"
+    set remote-gw {{ endpoint.remote_gw }}
+    set idle-timeout enable
+    set dpd-retrycount 2
+    set dpd-retryinterval 2
+    set net-device enable
+    set add-route disable
+    set exchange-fgt-device-id enable
+    set exchange-ip-addr4 {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
+    {% if main.vars.vrf -%}
+    set encapsulation vpn-id-ipip
+    {% endif -%}
+    {% if main.vars.advpn -%}
+    set auto-discovery-receiver enable
+    {% endif -%}
+    set psksecret {{vpn_psk}}
+    set network-overlay enable
+    set network-id {{ endpoint.netid }}
+    set transport udp
+next
+{% endfor -%}
+{% endfor -%}
+end
+{# --------------------------------------------------------------------- -#}
+{# IPsec Phase2 Interfaces:                                              -#}
+{# --------------------------------------------------------------------- -#}
+config vpn ipsec phase2-interface
+{% for hub in main.hubs -%}
+{% for endpoint in hub.endpoints -%}
+edit "{{ endpoint.phase1 }}"
+    set phase1name "{{ endpoint.phase1 }}"
+    set proposal aes256-sha256
+    set auto-negotiate enable
+    set dhgrp 20 21
+next
+{% endfor -%}
+{% endfor -%}
+end
+{# --------------------------------------------------------------------- -#}
+{# IPsec Tunnel System Interfaces:                                       -#}
+{# --------------------------------------------------------------------- -#}
+config system interface
+{% for hub in main.hubs -%}
+{% for endpoint in hub.endpoints -%}
+edit "{{ endpoint.phase1 }}"
+    set type tunnel
+    set monitor-bandwidth enable
+next
+{% endfor -%}
+{% endfor -%}
+end
