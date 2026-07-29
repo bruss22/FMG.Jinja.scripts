@@ -1,4 +1,5 @@
 {%- import '00-import' as main with context -%}
+{%- set hub = main.hubs | selectattr('name', 'equalto', 'HUB1') | first -%}
 {%- set ns = namespace(vrfs=[]) -%}
 config router route-map
   edit "HLAN_TAG"
@@ -35,21 +36,23 @@ set graceful-restart enable
 set recursive-next-hop enable
 set recursive-inherit-priority enable
 config neighbor
-edit 192.168.132.2
+{% for neighbor in hub.ebgp_neighbors -%}
+    edit "{{ neighbor.ip }}"
+        set interface "{{ neighbor.interface }}"
+        set remote-as {{ neighbor.remote_as }}
+        set update-source "{{ neighbor.interface }}"
         set advertisement-interval 1
         set capability-graceful-restart enable
         set attribute-unchanged med
         set ebgp-enforce-multihop enable
         set next-hop-self enable
         set soft-reconfiguration enable
-        set interface {{hlan1_port}}
-        set remote-as 65011
-        set update-source {{hlan1_port}}
         {% if main.vars.vrf -%}
         set soft-reconfiguration-vpnv4 enable
         set capability-graceful-restart-vpnv4 enable
         {% endif -%}
     next
+{% endfor -%}
 end
 config neighbor-group
     edit "EDGE"
