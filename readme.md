@@ -91,8 +91,9 @@ Each endpoint defines everything needed to build an IPsec tunnel, including:
 Templates iterate through these endpoint definitions to generate the required configuration automatically.
 
 ⸻
-Templates marked {#       Pre-VDOM FMG Jinja Script      #} must be set as such
+Templates marked {#       Pre-VDOM FMG Jinja Script      #}  must be set as such
 ⸻
+
 Typical Workflow
 
 1. Load your use case specific meta-variables into FMG
