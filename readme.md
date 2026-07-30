@@ -9,6 +9,7 @@ Rather than modifying multiple Jinja templates, deployment-specific information 
 Outside of gui timeouts for admins and gui sessions. For most deployments, 00-import.j2 and valid meta-variables should be the only files that requires modification.
 
 SDWAN and Static routes utilze the GUI templates in FMG as they are easier to manipulate for those configs.
+
 ⸻
 
 The 00-import File
