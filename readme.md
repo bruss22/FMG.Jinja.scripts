@@ -6,7 +6,7 @@ The goal of this project is to minimize the amount of template customization req
 
 Rather than modifying multiple Jinja templates, deployment-specific information is centralized in 00-import.j2. The remaining templates consume this data to generate the appropriate FortiGate configuration.
 
-For most deployments, 00-import.j2 and valid meta-variables should be the only files that requires modification.
+Outside of gui timeouts for admins and gui sessions. For most deployments, 00-import.j2 and valid meta-variables should be the only files that requires modification.
 
 ⸻
 
