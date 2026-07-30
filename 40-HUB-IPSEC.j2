@@ -15,6 +15,7 @@ config vpn ipsec phase1-interface
 {% for hub in main.hubs -%}
 {% if hub.serial == DVMDB.serial -%}
 {% for endpoint in hub.endpoints -%}
+{# get everything after the last - in a string. -#}
 edit "{{ endpoint.phase1.rsplit("-", 1)[1] }}"
     set type dynamic
     set interface "{{endpoint.port}}"
