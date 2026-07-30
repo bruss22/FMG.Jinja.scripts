@@ -1,11 +1,3 @@
-{%- import '00-import' as main with context -%}
-config log fortianalyzer setting
-    set status enable
-    set server "192.168.0.2"
-    set upload-option realtime
-    set reliable enable
-    set vrf-select 250
-end
 config system interface
 {% for x in main.underlays -%}
 {% if x.port is defined -%}
