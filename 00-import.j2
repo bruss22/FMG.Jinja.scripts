@@ -1,13 +1,13 @@
-{# Script #1: Import CLI template For FMG. Create new Jinja CLI Template with the following contents#}
-{# Nets Object is list of dictionaries containing Network Based MetaVariables #}
+{# Nets Object is list of dictionaries containing Network Based MetaVariables if a device  does now have the _name defined contd below #}
+{# contd. that network will not be builton that device #}
 {# MetaVars should be in place om FMG prior to template creation #}
 {# format key:metavar #}
 {# 'subnet':network1_subnet define in cidr notation xxx.xxx.xxx.xxx/xx. script checks for host and network#}
 {# 'netid':network1_netid will be used for VLANID / DHCP Server Index or both #}
+{# Glabal Vars, If vlan based networks set network type to "network_type":"vlan" Only required for 20-build-nets script #}
+{# Default mode is port modee. If use case consists of both populate the override list in 20-Build-nets #}
 {%- set _do = "" -%}
 {%- set vars = {} -%}
-{# Glabal Vars, If vlan based networks set network type to "network_type":"vlan" Only required for build_nets script #}
-{# Default mode is port mode #}
 {%- set _do = vars.update({
   "network_type":"",
   "vlan_prefix":"VLAN",
