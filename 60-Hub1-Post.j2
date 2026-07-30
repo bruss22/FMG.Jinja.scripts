@@ -1,20 +1,16 @@
+{%- import '00-import' as main with context -%}
 config system interface
-    edit {{UL1_port}}
-        set allowaccess speed-test fgfm ping
-        set outbandwidth {{UL1_outbw}}
-        set inbandwidth {{UL1_inbw}}
-        set estimated-upstream-bandwidth {{UL1_outbw}}
-        set estimated-downstream-bandwidth {{UL1_inbw}}
-        set egress-shaping-profile "SHAPER"
-        set monitor-bandwidth enable
-    next
-    edit {{UL2_port}}
-        set allowaccess speed-test fgfm ping
-        set outbandwidth {{UL2_outbw}}
-        set inbandwidth {{UL2_inbw}}
-        set estimated-upstream-bandwidth {{UL2_outbw}}
-        set estimated-downstream-bandwidth {{UL2_inbw}}
-        set egress-shaping-profile "SHAPER"
-        set monitor-bandwidth enable
-    next
+{% for x in main.underlays -%}
+{% if x.port is defined -%}
+edit {{x.port}}
+    set allowaccess speed-test fgfm 
+    set outbandwidth {{x.uloutbw}}
+    set inbandwidth {{x.ulinbw}}
+    set estimated-upstream-bandwidth {{x.uloutbw}}
+    set estimated-downstream-bandwidth {{x.ulinbw}}
+    set egress-shaping-profile "SHAPER"
+    set monitor-bandwidth enable
+next
+{% endif -%}
+{% endfor -%}
 end
