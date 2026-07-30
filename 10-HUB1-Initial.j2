@@ -1,6 +1,7 @@
+{# Set as Pre-Vdom Jinja Scrtipt in Fortimanager #}
 {%- import '00-import' as main with context -%}
 config system interface
-edit "HUB1-Lo"
+edit "HUB-Lo"
 set vdom "root"
 set ip {{main.vars.ipv4lbrange|ipmath(253|int)}} 255.255.255.255
 set allowaccess ping
