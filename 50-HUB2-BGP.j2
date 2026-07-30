@@ -72,7 +72,7 @@ config neighbor-group
 end
 config neighbor-range
     edit 1
-        set prefix {{main.vars.ipv4lbrange}} 255.255.255.0
+        set prefix {{main.vars.ipv4lbrange}}
         set neighbor-group "EDGE"
     next
 end
