@@ -11,6 +11,7 @@ end
 config system settings
 set location-id {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
 end
+{#    Local Breakout from vrf xxx to vrf 0    #}
 {% if main.vars.vrf -%}
 config system settings
 set allow-subnet-overlap enable
