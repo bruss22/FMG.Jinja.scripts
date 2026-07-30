@@ -1,4 +1,3 @@
-{#       Pre-VDOM FMG Jinja Script      #}
 {%- import '00-import' as main with context -%}
 config system interface
 edit "HUB1-Lo"
@@ -9,7 +8,7 @@ set type loopback
 next
 edit "BGP-Lo"
 set vdom "root"
-set ip {{ main.hubs[0].exchangeip }} 255.255.255.255
+set ip {{ main.hubs[0].exchangeip }}  255.255.255.255
 set allowaccess ping
 set type loopback
 next

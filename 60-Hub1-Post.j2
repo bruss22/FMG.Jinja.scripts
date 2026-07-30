@@ -5,6 +5,7 @@ config system interface
         set inbandwidth {{UL1_inbw}}
         set estimated-upstream-bandwidth {{UL1_outbw}}
         set estimated-downstream-bandwidth {{UL1_inbw}}
+        set egress-shaping-profile "SHAPER"
         set monitor-bandwidth enable
     next
     edit {{UL2_port}}
@@ -13,6 +14,7 @@ config system interface
         set inbandwidth {{UL2_inbw}}
         set estimated-upstream-bandwidth {{UL2_outbw}}
         set estimated-downstream-bandwidth {{UL2_inbw}}
+        set egress-shaping-profile "SHAPER"
         set monitor-bandwidth enable
     next
 end

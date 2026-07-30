@@ -1,5 +1,6 @@
-{#       Pre-VDOM FMG Jinja Script      #}
-{%- import '00-import' as main with context -%}
+\{%- import '00-import' as main with context -%}
+{%- set ns = namespace(index=0, vindex=4000,pezone=[],cezone=[]) -%}
+{%- set _ = "" %}
 config system interface
 edit "Branch-Lo"
 set vdom "root"
@@ -11,29 +12,89 @@ end
 config system settings
 set location-id {{main.vars.ipv4lbrange|ipmath(branch_id|int)}}
 end
-{#    Local Breakout from vrf xxx to vrf 0    #}
-{% if main.vars.vrf -%}
+{% if main.vars.vrf 
+      and main.vars.bvrf_dia -%}
 config system settings
-set allow-subnet-overlap enable
+    set allow-subnet-overlap enable
 end
+{% if 'FortiGate-VM64' in DVMDB.platform -%}
+{% for vrf in main.vars.bvrf_dia -%}
+{% if vrf is defined -%}
 config system vdom-link
-  edit "vrf{{ blan1_vrf }}_leak"
+  edit "vrf{{ vrf }}_leak"
   next
 end
 config system interface
-  edit "vrf{{ blan1_vrf }}_leak0"
+  edit "vrf{{ vrf }}_leak0"
     set type vdom-link
     set vrf 0
     set vdom root
-    set ip 10.255.255.0/31
+    set ip 10.255.255.{{ns.index}}/31
+    {% set ns.index = ns.index + 1 -%}
+    {% set _ = ns.pezone.append("vrf" ~ vrf ~ "_leak0") -%}
     set allowaccess ping
   next
-  edit "vrf{{ blan1_vrf }}_leak1"
+  edit "vrf{{ vrf }}_leak1"
     set type vdom-link
-    set vrf {{ blan1_vrf  }}
+    set vrf {{ vrf  }}
     set vdom root
-    set ip 10.255.255.1/31
+    set ip 10.255.255.{{ns.index}}/31
+    {% set ns.index = ns.index + 1 -%}
+    {% set _ = ns.cezone.append("vrf" ~ vrf ~ "_leak1") -%}
     set allowaccess ping
    next
+end
+{% endif -%}
+{% endfor %}
+{% else-%}
+config system global
+    set single-vdom-npuvlink en
+end
+{% for vrf in main.vars.bvrf_dia -%}
+{% if vrf is defined -%}
+config system interface
+  edit "vrf{{ vrf }}_leak0"
+    set type vlan
+    set vlanid {{ns.vindex}}
+    set interface "npu0_vlink0"
+    set vrf 0
+    set vdom root
+    set mode static
+    set ip 10.255.255.{{ns.index}}/31
+    {% set ns.index = ns.index + 1 -%}
+    {% set _ = ns.pezone.append("vrf" ~ vrf ~ "_leak0") -%}
+    set allowaccess ping
+  next
+  edit "vrf{{ vrf }}_leak1"
+    set type vlan
+    set vlanid {{ns.vindex}}
+    set interface "npu0_vlink1"
+    set vrf {{ vrf }}
+    set vdom root
+    set mode static
+    set ip 10.255.255.{{ns.index}}/31
+    {% set ns.index = ns.index + 1 -%}
+    {% set _ = ns.cezone.append("vrf" ~ vrf ~ "_leak1") -%}
+    {% set ns.vindex = ns.vindex + 1 -%}
+    set allowaccess ping
+  next 
+end
+{% endif -%}
+{% endfor -%}
+{%- endif -%}
+{# Configure zones for easier VRF-leaking policy management #}
+config system zone
+  edit "pevrf_dia_zone"
+    set intrazone deny
+{%- for i in ns.pezone %}
+    append interface "{{ i }}"
+{%- endfor %}
+  next
+  edit "cevrf_dia_zone"
+    set intrazone deny
+{%- for i in ns.cezone %}
+    append interface "{{ i }}"
+{%- endfor %}
+  next
 end
 {% endif -%}

@@ -1,5 +1,5 @@
-{#       Pre-VDOM FMG Jinja Script      #}
-{#- Script #2:Build VLAN or Physical Interfaces based on value of network_type:"" in 00-import var object -#} 
+{#- Script #2:Build VLAN or Physical Interfaces based on value of network_type:"" in main.j2 var object -#} 
+{#- Save as CLI Jinja Template and import Script #1 -#}
 {%- import '00-import' as main with context -%}
 {%- set override = [''] -%}
 {%- set network_type = 'port' -%}

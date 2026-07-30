@@ -7,10 +7,10 @@
 {#   - Hub remote gateway                                                -#}
 {#   - Unique IPsec network ID                                           -#}
 {# --------------------------------------------------------------------- -#}
+{%- import '00-import' as main with context -%}
 {# --------------------------------------------------------------------- -#}
 {# IPsec Phase1-Interfaces: If main.vrf=true and main.advpn checks       -#}
 {# --------------------------------------------------------------------- -#}
-{%- import '00-import' as main with context -%}
 config vpn ipsec phase1-interface
 {% for hub in main.hubs -%}
 {% for endpoint in hub.endpoints -%}
