@@ -6,9 +6,9 @@ The goal of this project is to minimize the amount of template customization req
 
 Rather than modifying multiple Jinja templates, deployment-specific information is centralized in 00-import.j2. The remaining templates consume this data to generate the appropriate FortiGate configuration.
 
-Outside of gui timeouts for admins and gui sessions. For most deployments, 00-import.j2 and valid meta-variables should be the only files that requires modification.
+Outside of traffic shaping, gui timeouts admins and gui sessions. For most deployments, 00-import.j2 and valid meta-variables should be the only files that requires modification.
 
-SDWAN and Static routes utilze the GUI templates in FMG as they are easier to manipulate for those configs.
+SDWAN and Static routes utilze the GUI templates in FMG as they are easier to manipulate for those configs and are not included in this framework.
 
 ⸻
 
