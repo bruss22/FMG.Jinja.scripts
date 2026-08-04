@@ -1,24 +1,25 @@
 {# Script #1: Import CLI template For FMG. Create new Jinja CLI Template with the following contents#}
-{# Nets Object is list of dictionaries containing Network Based MetaVariables #}
+{# Nets Object is list of dictionaries containing Network Based Meta-Variables #}
 {# MetaVars should be in place om FMG prior to template creation #}
 {# format key:metavar #}
 {# 'subnet':network1_subnet define in cidr notation xxx.xxx.xxx.xxx/xx. script checks for host and network#}
 {# 'netid':network1_netid will be used for VLANID / DHCP Server Index or both #}
-{# Glabal Vars, If vlan based networks set network type to "network_type":"vlan" Only required for build_nets script #}
-{# Default mode is port mode #}
 {%- set _do = "" -%}
 {%- set vars = {} -%}
+{# Glabal Vars, If vlan based networks set network type to "network_type":"vlan" Only required for build_nets script #}
+{# Default mode is port mode #}
 {%- set _do = vars.update({
   "network_type":"",
   "vlan_prefix":"VLAN",
   "advpn": true,
   "vrf": true,
-  "bvrf_dia":[blan1_vrf,guest_vrf],
+  "bvrf_dia":[blan1_vrf,],
   "hvrf_dia":[],
   "ipv4lbrange":"172.22.22.0/24",
   "internal_asn":65222,
   "branch_summary":["192.168.136.0/22"]
 })-%}
+
 {%- set nets = 
   [
         {'name':blan1_name, 'port':blan1_port, 'netid':blan1_netid, 'subnet':blan1_subnet, 'dhcp':blan1_dhcp, 'vrf':blan1_vrf, "bgp":blan1_bgp},
@@ -27,17 +28,20 @@
   ]
 -%}
 
-{%- set underlays = 
-  [
-        {'port':UL1_port,'ip':UL1_ip,'gw':UL1_gw},
-        {'port':UL2_port,'ip':UL2_ip,'gw':UL2_gw},
-  ]
+{%- set underlays =
+[
+    {'port': UL1_port, 'ip': UL1_ip, 'gw': UL1_gw, 'ulinbw': UL1_inbw, 'uloutbw': UL1_outbw},
+    {'port': UL2_port, 'ip': UL2_ip, 'gw': UL2_gw, 'ulinbw': UL2_inbw, 'uloutbw': UL2_outbw},
+    {'port': UL3_port, 'ip': UL3_ip, 'gw': UL3_gw, 'ulinbw': UL3_inbw, 'uloutbw': UL3_outbw},
+    {'port': UL4_port, 'ip': UL4_ip, 'gw': UL4_gw, 'ulinbw': UL4_inbw, 'uloutbw': UL4_outbw},
+]
 -%}
+
 {# HUB Definitions #}
 {%- set hubs = [
     {
         "name": "HUB1",
-        "serial": "FGVMSLTM26000716",
+        "serial": "FGVMSLTM26001505",
         "exchangeip": "172.22.22.251",
         "ebgp_neighbors": [
             {
@@ -52,20 +56,38 @@
                 "remote_gw": "192.168.100.2",
                 "netid": 1,
                 "port": "port2",
-                "branch_port": UL1_port
+                "branch_tunnels": [
+                    {
+                        "phase1": "HUB1-VPN1",
+                        "branch_port": UL1_port
+                    },
+                    {
+                        "phase1": "HUB1-VPN3",
+                        "branch_port": UL3_port
+                    }
+                ]
             },
             {
                 "phase1": "HUB1-VPN2",
                 "remote_gw": "192.168.101.2",
                 "netid": 2,
                 "port": "port3",
-                "branch_port": UL2_port
+                "branch_tunnels": [
+                    {
+                        "phase1": "HUB1-VPN2",
+                        "branch_port": UL2_port
+                    },
+                    {
+                        "phase1": "HUB1-VPN4",
+                        "branch_port": UL4_port
+                    }
+                ]
             }
         ]
     },
     {
         "name": "HUB2",
-        "serial": "FGVMSLTM26001156",
+        "serial": "FGVMSLTM26000910",
         "exchangeip": "172.22.22.252",
         "ebgp_neighbors": [
             {
@@ -80,14 +102,32 @@
                 "remote_gw": "192.168.102.2",
                 "netid": 5,
                 "port": "port2",
-                "branch_port": UL1_port
+                "branch_tunnels": [
+                    {
+                        "phase1": "HUB2-VPN1",
+                        "branch_port": UL1_port
+                    },
+                    {
+                        "phase1": "HUB2-VPN3",
+                        "branch_port": UL3_port
+                    }
+                ]
             },
             {
                 "phase1": "HUB2-VPN2",
                 "remote_gw": "192.168.103.2",
                 "netid": 6,
                 "port": "port3",
-                "branch_port": UL2_port
+                "branch_tunnels": [
+                    {
+                        "phase1": "HUB2-VPN2",
+                        "branch_port": UL2_port
+                    },
+                    {
+                        "phase1": "HUB2-VPN4",
+                        "branch_port": UL4_port
+                    }
+                ]
             }
         ]
     }
