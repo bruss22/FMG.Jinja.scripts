@@ -1,3 +1,4 @@
+{%- import '00-import' as main with context -%}
 config system interface
 {% for x in main.underlays -%}
 {% if x.port is defined -%}
