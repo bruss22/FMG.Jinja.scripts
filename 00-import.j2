@@ -6,7 +6,7 @@
 {# 'netid':network1_netid will be used for VLANID / DHCP Server Index or both #}
 {%- set _do = "" -%}
 {%- set vars = {} -%}
-{# Glabal Vars, If vlan based networks set network type to "network_type":"vlan" Only required for build_nets script #}
+{# Global Vars, If vlan based networks set network type to "network_type":"vlan" Only required for build_nets script #}
 {# Default mode is port mode #}
 {%- set _do = vars.update({
   "network_type":"",
